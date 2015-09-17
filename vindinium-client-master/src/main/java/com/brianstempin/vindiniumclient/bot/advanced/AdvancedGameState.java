@@ -13,6 +13,7 @@ public class AdvancedGameState {
     private final Map<Integer, GameState.Hero> heroesById;
     private final Map<GameState.Position, Vertex> boardGraph;
     private final GameState.Hero me;
+    private String viewUrl;
 
     /**
      * Creates an AdvancedGameState from a GameState
@@ -24,6 +25,7 @@ public class AdvancedGameState {
         pubs = new HashMap<>();
         heroesById = new HashMap<>();
         heroesByPosition = new HashMap<>();
+        viewUrl = gameState.getViewUrl();
 
         // Hero stuffs
         for(GameState.Hero currentHero : gameState.getGame().getHeroes()) {
@@ -116,6 +118,7 @@ public class AdvancedGameState {
         // Copy the stuff we can just re-use
         this.boardGraph = oldGameState.getBoardGraph();
         this.pubs = oldGameState.getPubs();
+        this.viewUrl = oldGameState.getViewUrl();
 
         // Re-build the hero maps
         this.heroesByPosition = new HashMap<>();
@@ -181,4 +184,10 @@ public class AdvancedGameState {
     public GameState.Hero getMe() {
         return me;
     }
+
+    public String getViewUrl() {
+        return viewUrl;
+    }
+    
+    
 }

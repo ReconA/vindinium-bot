@@ -16,6 +16,7 @@ public enum BotMove {
         this.direction = moveName;
     }
 
+    @Override
     public String toString() {
         return direction;
     }
