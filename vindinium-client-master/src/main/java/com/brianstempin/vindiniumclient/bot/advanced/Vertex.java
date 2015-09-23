@@ -70,5 +70,10 @@ public class Vertex {
     public boolean hasAdjacentPubs() {
         return !adjacentPubs.isEmpty();
     }
+    
+    @Override
+    public String toString() {
+        return this.position.toString();
+    }
 
 }

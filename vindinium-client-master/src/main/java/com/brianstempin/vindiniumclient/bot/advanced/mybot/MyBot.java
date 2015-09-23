@@ -32,10 +32,20 @@ public class MyBot implements AdvancedBot {
 
     private final static Logger logger = LogManager.getLogger(MyBot.class);
 
+    /**
+     * Move is called every turn to decide what direction we move this turn. 
+     * @param gameState
+     * @return The direction next move will go to. 
+     */
     @Override
     public BotMove move(AdvancedGameState gameState) {
         this.gameState = gameState;
         this.me = gameState.getMe();
+        
+        closestMine = null;
+        vertexClosestToMine = null;
+        closestPub = null;
+        vertexClosestToPub = null;
 
         logger.info("Current position " + me.getPos());
         bfs(gameState.getBoardGraph().get(getCurrentPosition()));
@@ -144,7 +154,9 @@ public class MyBot implements AdvancedBot {
                 for (Mine m : gameState.getMines().values()) {
                     if (calcManhattanDistance(m.getPosition(), v.getPosition()) == 1 && !isMyMine(m)) {
                         closestMine = m;
-                        vertexClosestToPub = v;
+                        vertexClosestToMine = v;
+                        logger.info("Closest mine at position " + closestMine.getPosition());
+                        logger.info("Vertex adjacent to it is " +  vertexClosestToMine.toString());
                     }
                 }
             }
@@ -159,6 +171,10 @@ public class MyBot implements AdvancedBot {
         }
     }
 
+    /**
+     * Returns current position. 
+     * @return 
+     */
     private Position getCurrentPosition() {
         return gameState.getMe().getPos();
     }
@@ -171,6 +187,10 @@ public class MyBot implements AdvancedBot {
     public void shutdown() {
     }
 
+    /**
+     * Find closest vertex adjacent to a pub. 
+     * @return The closest vertex adjacent to a pub. 
+     */
     private Vertex findClosestPub() {
         int minDistance = Integer.MAX_VALUE;
         Vertex closest = null;
@@ -178,6 +198,7 @@ public class MyBot implements AdvancedBot {
         for (Vertex v : adjacentToPub) {
             if (v.getDistance() < minDistance) {
                 closest = v;
+                minDistance = v.getDistance();
             }
         }
 
@@ -238,14 +259,14 @@ public class MyBot implements AdvancedBot {
     /**
      * Goes towards the closest mine.
      *
-     * @return Vertex adjacent to a mine. If already in such a vertex, returns
+     * @return The closest vertex adjacent to a mine. If already in such a vertex, returns
      * the mine vertex.
      */
     private Vertex goToClosestMine() {
         Vertex currentVertex = gameState.getBoardGraph().get(getCurrentPosition());
         Vertex v = null;
         
-        if (currentVertex.equals(vertexClosestToMine)) {
+        if (currentVertex.getPosition().equals(vertexClosestToMine.getPosition())) {
             logger.info("Standing next to a mine.");
             v = gameState.getBoardGraph().get(closestMine.getPosition());
         } else {
@@ -255,6 +276,11 @@ public class MyBot implements AdvancedBot {
 
         return v;
     }
+    
+    /**
+     * Find the closest vertex adjacent to a mine.
+     * @return Closest vertex adjacent to a mine. 
+     */
 
     private Vertex findClosestMine() {
         int minDistance = Integer.MAX_VALUE;
@@ -265,6 +291,7 @@ public class MyBot implements AdvancedBot {
                 if (v.getDistance() < minDistance
                         && !isMyMine(m)) {
                     closest = v;
+                    minDistance = v.getDistance();
                 }
             }
         }
