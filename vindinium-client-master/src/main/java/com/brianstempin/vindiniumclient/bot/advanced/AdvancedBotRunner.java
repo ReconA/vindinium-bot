@@ -12,6 +12,10 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.gson.Gson;
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,10 +23,11 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.Callable;
 
 public class AdvancedBotRunner implements Callable<GameState> {
+
     private static final HttpTransport HTTP_TRANSPORT = new ApacheHttpTransport();
     private static final JsonFactory JSON_FACTORY = new GsonFactory();
-    private static final HttpRequestFactory REQUEST_FACTORY =
-            HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+    private static final HttpRequestFactory REQUEST_FACTORY
+            = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
                 @Override
                 public void initialize(HttpRequest request) {
                     request.setParser(new JsonObjectParser(JSON_FACTORY));
@@ -58,6 +63,15 @@ public class AdvancedBotRunner implements Callable<GameState> {
             gameState = response.parseAs(GameState.class);
             logger.info("Game URL: {}", gameState.getViewUrl());
 
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().browse(new URI(gameState.getViewUrl()));
+                } catch (URISyntaxException | IOException t) {
+                    logger.info("Couldn't open game.");
+                    //Pro exception handling
+                }
+            }
+
             advancedGameState = new AdvancedGameState(gameState);
 
             // Game loop
@@ -65,7 +79,6 @@ public class AdvancedBotRunner implements Callable<GameState> {
                 logger.info("Taking turn " + gameState.getGame().getTurn());
                 BotMove direction = bot.move(advancedGameState);
                 Move move = new Move(apiKey.getKey(), direction.toString());
-
 
                 HttpContent turn = new UrlEncodedContent(move);
                 HttpRequest turnRequest = REQUEST_FACTORY.buildPostRequest(new GenericUrl(gameState.getPlayUrl()), turn);

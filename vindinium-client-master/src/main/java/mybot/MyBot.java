@@ -3,18 +3,24 @@ package mybot;
 import com.brianstempin.vindiniumclient.bot.advanced.AdvancedBot;
 import com.brianstempin.vindiniumclient.bot.advanced.AdvancedGameState;
 import com.brianstempin.vindiniumclient.bot.BotMove;
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MyBot implements AdvancedBot {
 
-    private DecisionMaker[] decisionMakers = {new HealingDecisionMaker(), new LootingDecisionMaker()};
+    private DecisionMaker[] decisionMakers = {new CombatDecisionMaker(),
+        new HealingDecisionMaker(),
+        new LootingDecisionMaker()};
 
     private final static Logger logger = LogManager.getLogger(MyBot.class);
 
     /**
-     * Move is called every turn to decide what direction we move this turn.
-     *
+     * Goes through decision makers until one of them wants to act. Then control
+     * is passed to that DM.
      *
      * @param gameState Current game state.
      * @return The direction next move will go to.
@@ -36,7 +42,7 @@ public class MyBot implements AdvancedBot {
     }
 
     @Override
-    public void setup() {
+    public void setup() {        
     }
 
     @Override

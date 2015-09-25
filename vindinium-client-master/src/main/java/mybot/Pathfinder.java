@@ -81,7 +81,7 @@ public class Pathfinder {
      * @param b
      * @return Manhattan distance between a and b.
      */
-    public int calcManhattanDistance(Position a, Position b) {
+    public int calcDistance(Position a, Position b) {
         return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
     }
 
@@ -116,12 +116,12 @@ public class Pathfinder {
         logger.info("Moving towards " + goal.getPosition());
 
         Position currentPos = getCurrentPosition();
-        if (calcManhattanDistance(currentPos, goal.getPosition()) == 0) {
+        if (calcDistance(currentPos, goal.getPosition()) == 0) {
             logger.info("Goal is the current position. Staying still.");
             return move;
         }
 
-        while (calcManhattanDistance(currentPos, goal.getPosition()) != 1) {
+        while (calcDistance(currentPos, goal.getPosition()) != 1) {
             goal = goal.getParent();
         }
 
@@ -174,7 +174,7 @@ public class Pathfinder {
      * @return True is there is an adjacent pub. False otherwise. 
      */
     public boolean standingAdjacentToPub() {
-        return calcManhattanDistance(pubs[0].getPosition(), getCurrentPosition()) == 1;
+        return calcDistance(pubs[0].getPosition(), getCurrentPosition()) == 1;
     }
 
 }
