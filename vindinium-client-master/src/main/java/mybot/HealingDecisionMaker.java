@@ -7,36 +7,48 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Decides if we need healing. 
+ * Decides if we need healing.
  */
 public class HealingDecisionMaker implements DecisionMaker {
 
-    private Pathfinder pathfinder;
-    private AdvancedGameState gameState;
-    
     private final static Logger logger = LogManager.getLogger(HealingDecisionMaker.class);
 
+    private final int healthThreshold = 50;
+    private final int almostFull = 90;
+
     /**
-     * Heal if health is less than 50, or standing next to a pub and health is less than 80.
+     * Heal if health is less than 50, or standing next to a pub and health is
+     * less than 80.
+     *
      * @param pathfinder
-     * @return True if we want to heal, false otherwise. 
+     * @return True if we want to heal, false otherwise.
      */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        this.pathfinder = pathfinder;
-        this.gameState = this.pathfinder.getGameState();
-        return (gameState.getMe().getLife() < 50
-                || (gameState.getMe().getLife() < 80 && pathfinder.standingAdjacentToPub()));
+        AdvancedGameState gameState = pathfinder.getGameState();
+
+        int myHealth = gameState.getMe().getLife();
+        if (myHealth < almostFull && pathfinder.standingAdjacentToPub()) {
+            logger.info("Healing to full HP.");
+            return true;
+        } else if (myHealth < this.healthThreshold) {
+            logger.info("Low HP. Healing.");
+            return false;
+        } else {
+            logger.info("HP at an acceptable level");
+            return false;
+        }
     }
 
     /**
      * Simply go to the closest pub.
-     * @return A move towards the closest pub. 
+     *
+     * @return A move towards the closest pub.
      */
     @Override
-    public BotMove takeAction() {
-        Vertex goal = this.pathfinder.getClosestPub();
-        return this.pathfinder.moveTowards(goal);
+    public BotMove takeAction(Pathfinder pathfinder) {
+        Vertex goal = pathfinder.getClosestPub();
+        return pathfinder.moveTowards(goal);
     }
 
     @Override

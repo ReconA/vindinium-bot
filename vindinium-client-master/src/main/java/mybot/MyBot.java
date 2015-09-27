@@ -37,7 +37,7 @@ public class MyBot implements AdvancedBot {
             logger.info(dm.getName() + " thinks...");
             if (dm.wantsToAct(pathfinder)) {
                 logger.info(dm.getName() + " shall lead me to glory!");
-                move = dm.takeAction();
+                move = dm.takeAction(pathfinder);
                 break;
             }
         }

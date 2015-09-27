@@ -14,8 +14,6 @@ import org.apache.logging.log4j.Logger;
 public class TelefragDecisionmaker implements DecisionMaker {
 
     private static final Logger logger = LogManager.getLogger(TelefragDecisionmaker.class);
-    private AdvancedGameState gameState;
-    private Pathfinder pathfinder;
 
     /**
      * If an enemy with more mines than me is standing on my spawn point, check if there a way to commit suicide this turn. 
@@ -24,18 +22,19 @@ public class TelefragDecisionmaker implements DecisionMaker {
      */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        this.pathfinder = pathfinder;
-        this.gameState = pathfinder.getGameState();
+        AdvancedGameState gameState = pathfinder.getGameState();
         
         Hero me = gameState.getMe();
         Hero target = gameState.getHeroesByPosition().get(me.getSpawnPos());
         int hitDamage = 20;
         if (target == null || target.getMineCount() < me.getMineCount()) { //Check if there is a suitable target
+            logger.info("No telefrag target.");
             return false;
         } else if (pathfinder.standingAdjacentToMine() && gameState.getMe().getLife() <= hitDamage) { //Check if there's a way to commit suicide. 
+            logger.info("Target found.");
             return true;
         }
-        
+        logger.info("Target found, but no way to suicide.");
         return false;
     }
 
@@ -44,7 +43,8 @@ public class TelefragDecisionmaker implements DecisionMaker {
      * @return 
      */
     @Override
-    public BotMove takeAction() {
+    public BotMove takeAction(Pathfinder pathfinder) {
+        logger.info("Telefragging!");
         return pathfinder.goToClosestMine();
     }
 

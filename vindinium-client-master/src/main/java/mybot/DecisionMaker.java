@@ -18,9 +18,10 @@ public interface DecisionMaker {
     
     /**
      * Decide what move this DM will make. 
+     * @param pathfinder
      * @return Move direction. 
      */
-    public BotMove takeAction();
+    public BotMove takeAction(Pathfinder pathfinder);
     
     /**
      * Get a string that describes this decision maker. 

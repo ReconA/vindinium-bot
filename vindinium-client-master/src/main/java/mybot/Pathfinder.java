@@ -87,7 +87,13 @@ public class Pathfinder {
     public int calcDistance(Vertex a, Vertex b) {
         return calcDistance(a.getPosition(), b.getPosition());
     }
-
+    
+    /**
+     * Check if hero owns a mine. 
+     * @param mine  
+     * @param hero 
+     * @return 
+     */
     public boolean heroOwns(Mine mine, Hero hero) {
         if (mine.getOwner() == null) {
             return false;
@@ -162,7 +168,7 @@ public class Pathfinder {
      *
      * @return Vertex of the closest mine. Null if no such mine is found.
      */
-    private Vertex getClosestMine() {
+    public Vertex getClosestMine() {
         for (Vertex v : mines) {
             if (!isMyMine(gameState.getMines().get(v.getPosition()))) {
                 return v;
@@ -203,7 +209,7 @@ public class Pathfinder {
     }
 
     public BotMove goToClosestPub() {
-        logger.info("Heading to the closest pub.");
+        logger.info("Heading to the closest pub at " + pubs[0]);
         return this.moveTowards(pubs[0]);
     }
 

@@ -14,8 +14,6 @@ import org.apache.logging.log4j.Logger;
 public class InnCamperDecisionMaker implements DecisionMaker {
 
     private static final Logger logger = LogManager.getLogger(TelefragDecisionmaker.class);
-    private AdvancedGameState gameState;
-    private Pathfinder pathfinder;
 
     /**
      * Check if I'm by far the richest hero.
@@ -25,8 +23,7 @@ public class InnCamperDecisionMaker implements DecisionMaker {
      */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        this.pathfinder = pathfinder;
-        this.gameState = pathfinder.getGameState();
+        AdvancedGameState gameState = pathfinder.getGameState();
 
         Hero me = gameState.getMe();
         int myMines = me.getMineCount();
@@ -40,10 +37,10 @@ public class InnCamperDecisionMaker implements DecisionMaker {
             }
             if (myGold < enemy.getGold() + goldMargin
                     || myMines < enemy.getMineCount() + mineMargin) {
+                logger.info("Hero " + enemy.getName() + " is almost as rich as me.");
                 return false;
             }
         }
-
         return true;
     }
 
@@ -54,10 +51,14 @@ public class InnCamperDecisionMaker implements DecisionMaker {
      * @return
      */
     @Override
-    public BotMove takeAction() {
+    public BotMove takeAction(Pathfinder pathfinder) {
+        AdvancedGameState gameState = pathfinder.getGameState();
+        logger.info("I am the richest hero. ");
         if (pathfinder.standingAdjacentToPub() && gameState.getMe().getLife() > 50) {
+            logger.info("Camping at an inn.");
             return BotMove.STAY;
         } else {
+            logger.info("Going to a pub.");
             return pathfinder.goToClosestPub();
         }
     }

@@ -8,17 +8,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CombatDecisionMaker implements DecisionMaker {
+
     private static final Logger logger = LogManager.getLogger(CombatDecisionMaker.class);
-    private AdvancedGameState gameState;
-    private Pathfinder pathfinder;
-    
+
     private final int HIT_DMG = 20;
-    
+
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        this.gameState = pathfinder.getGameState();
-        this.pathfinder = pathfinder;
-        
+        AdvancedGameState gameState = pathfinder.getGameState();
+
         for (Hero h : gameState.getHeroesById().values()) {
             if (h.getId() != gameState.getMe().getId()
                     && pathfinder.calcDistance(pathfinder.getCurrentPosition(), h.getPos()) < 4) {
@@ -26,22 +24,21 @@ public class CombatDecisionMaker implements DecisionMaker {
                 return true;
             }
         }
-        
         return false;
     }
 
     @Override
-    public BotMove takeAction() {
+    public BotMove takeAction(Pathfinder pathfinder) {
         logger.info("Bot is frozen with fear.");
         return BotMove.STAY;
     }
-    
+
     private BotMove flee() {
         return BotMove.STAY;
     }
-    
+
     private void evaluateVertex(Vertex v) {
-        
+
     }
 
     @Override
