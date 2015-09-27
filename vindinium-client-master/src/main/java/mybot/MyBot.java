@@ -3,16 +3,15 @@ package mybot;
 import com.brianstempin.vindiniumclient.bot.advanced.AdvancedBot;
 import com.brianstempin.vindiniumclient.bot.advanced.AdvancedGameState;
 import com.brianstempin.vindiniumclient.bot.BotMove;
-import java.awt.Desktop;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MyBot implements AdvancedBot {
 
-    private DecisionMaker[] decisionMakers = {new CombatDecisionMaker(),
+    private final DecisionMaker[] decisionMakers = {
+        new InnCamperDecisionMaker(),
+        new TelefragDecisionmaker(),
+//        new CombatDecisionMaker(),
         new HealingDecisionMaker(),
         new LootingDecisionMaker()};
 
@@ -27,22 +26,35 @@ public class MyBot implements AdvancedBot {
      */
     @Override
     public BotMove move(AdvancedGameState gameState) {
+        long startTime = System.nanoTime();
+
         logger.info("Creating pathfinder.");
         Pathfinder pathfinder = new Pathfinder(gameState);
+
         logger.info("Choosing decision maker.");
+        BotMove move = null;
         for (DecisionMaker dm : decisionMakers) {
+            logger.info(dm.getName() + " thinks...");
             if (dm.wantsToAct(pathfinder)) {
-                logger.info(dm.getType() + " shall lead me to glory!");
-                return dm.takeAction();
+                logger.info(dm.getName() + " shall lead me to glory!");
+                move = dm.takeAction();
+                break;
             }
         }
 
-        logger.info("No decision makers chosen. Staying still");
-        return BotMove.STAY;
+        if (move == null) {
+            logger.info("No decision makers chosen. Staying still");
+            move = BotMove.STAY;
+        }
+        
+        long stopTime = System.nanoTime();
+        long turnTime = (stopTime - startTime);
+        logger.info("Turn time " + turnTime + "ns");
+        return move;
     }
 
     @Override
-    public void setup() {        
+    public void setup() {
     }
 
     @Override

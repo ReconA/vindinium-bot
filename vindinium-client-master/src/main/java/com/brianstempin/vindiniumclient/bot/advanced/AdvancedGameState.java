@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class AdvancedGameState {
+
     private final Map<GameState.Position, Mine> mines;
     private final Map<GameState.Position, Pub> pubs;
     private final Map<GameState.Position, GameState.Hero> heroesByPosition;
@@ -17,6 +18,7 @@ public class AdvancedGameState {
 
     /**
      * Creates an AdvancedGameState from a GameState
+     *
      * @param gameState
      */
     public AdvancedGameState(GameState gameState) {
@@ -28,7 +30,7 @@ public class AdvancedGameState {
         viewUrl = gameState.getViewUrl();
 
         // Hero stuffs
-        for(GameState.Hero currentHero : gameState.getGame().getHeroes()) {
+        for (GameState.Hero currentHero : gameState.getGame().getHeroes()) {
             this.heroesByPosition.put(currentHero.getPos(), currentHero);
             this.heroesById.put(currentHero.getId(), currentHero);
         }
@@ -45,8 +47,9 @@ public class AdvancedGameState {
                 String tileValue = board.getTiles().substring(tileStart, tileStart + 1 + 1);
 
                 // We do nothing with tiles that are barriers
-                if (tileValue.equals("##"))
+                if (tileValue.equals("##")) {
                     continue;
+                }
 
                 Vertex v = new Vertex(pos, new LinkedList<Vertex>());
 
@@ -78,38 +81,42 @@ public class AdvancedGameState {
             GameState.Position currentVertexPosition = currentVertex.getPosition();
 
             // Pubs and mines cannot be passed through
-            if(this.mines.containsKey(currentVertexPosition) || this.pubs.containsKey(currentVertexPosition))
+            if (this.mines.containsKey(currentVertexPosition) || this.pubs.containsKey(currentVertexPosition)) {
                 continue;
+            }
 
             // Other players cannot be passed through.  However, they move, and mines/pubs don't, so its easier to make
             // the bot and path-finding deal with that.  We don't take other players into account here.
-
             // We can only move NSEW, so no need for a fancy set of nested loops...
             for (int xDelta = -1; xDelta <= 1; xDelta += 2) {
                 int currentX = currentVertex.getPosition().getX();
                 int newX = currentX + xDelta;
-                if(newX >= 0 && newX < board.getSize()) {
+                if (newX >= 0 && newX < board.getSize()) {
                     GameState.Position adjacentPos = new GameState.Position(newX, currentVertex.getPosition().getY());
                     Vertex adjacentVertex = this.boardGraph.get(adjacentPos);
-                    if(adjacentVertex != null)
+                    if (adjacentVertex != null) {
                         currentVertex.getAdjacentVertices().add(adjacentVertex);
+                    }
                 }
             }
             for (int yDelta = -1; yDelta <= 1; yDelta += 2) {
                 int currentY = currentVertex.getPosition().getY();
                 int newY = currentY + yDelta;
-                if(newY >= 0 && newY < board.getSize()) {
-                    GameState.Position adjacentPos = new GameState.Position( currentVertex.getPosition().getX(), newY);
+                if (newY >= 0 && newY < board.getSize()) {
+                    GameState.Position adjacentPos = new GameState.Position(currentVertex.getPosition().getX(), newY);
                     Vertex adjacentVertex = this.boardGraph.get(adjacentPos);
-                    if(adjacentVertex != null)
+                    if (adjacentVertex != null) {
                         currentVertex.getAdjacentVertices().add(adjacentVertex);
+                    }
                 }
             }
         }
     }
 
     /**
-     * Creates a new AdvancedGameState by taking he previous AdvancedGameState and updating is using a new GameState
+     * Creates a new AdvancedGameState by taking he previous AdvancedGameState
+     * and updating is using a new GameState
+     *
      * @param oldGameState
      * @param updatedState
      */
@@ -119,11 +126,10 @@ public class AdvancedGameState {
         this.boardGraph = oldGameState.getBoardGraph();
         this.pubs = oldGameState.getPubs();
         this.viewUrl = oldGameState.getViewUrl();
-
         // Re-build the hero maps
         this.heroesByPosition = new HashMap<>();
         this.heroesById = new HashMap<>();
-        for(GameState.Hero currentHero : updatedState.getGame().getHeroes()) {
+        for (GameState.Hero currentHero : updatedState.getGame().getHeroes()) {
             this.heroesByPosition.put(currentHero.getPos(), currentHero);
             this.heroesById.put(currentHero.getId(), currentHero);
         }
@@ -131,11 +137,11 @@ public class AdvancedGameState {
 
         // Update the mines
         this.mines = oldGameState.getMines();
-        for(Mine currentMine : this.mines.values()) {
+        for (Mine currentMine : this.mines.values()) {
             // Vindinium does the x and y coordinates backwards
             int tileStart = currentMine.getPosition().getX()
                     * updatedState.getGame().getBoard().getSize()
-                    *  2 + (currentMine.getPosition().getY() * 2);
+                    * 2 + (currentMine.getPosition().getY() * 2);
             // We don't want the whole tile; we want the second char
             String owner = updatedState.getGame().getBoard().getTiles().substring(tileStart + 1, tileStart + 1 + 1);
             Mine mine;
@@ -151,8 +157,8 @@ public class AdvancedGameState {
     }
 
     public AdvancedGameState(Map<GameState.Position, Mine> mines, Map<GameState.Position, Pub> pubs,
-                             Map<GameState.Position, GameState.Hero> heroesByPosition, Map<Integer,
-            GameState.Hero> heroesById, Map<GameState.Position, Vertex> boardGraph, GameState.Hero me) {
+            Map<GameState.Position, GameState.Hero> heroesByPosition, Map<Integer, GameState.Hero> heroesById,
+            Map<GameState.Position, Vertex> boardGraph, GameState.Hero me, int remainginTurns) {
         this.mines = mines;
         this.pubs = pubs;
         this.heroesByPosition = heroesByPosition;
@@ -188,6 +194,5 @@ public class AdvancedGameState {
     public String getViewUrl() {
         return viewUrl;
     }
-    
-    
+
 }

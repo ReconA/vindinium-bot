@@ -26,5 +26,5 @@ public interface DecisionMaker {
      * Get a string that describes this decision maker. 
      * @return Description of the decision maker. For example, "Combat Decision Maker".
      */
-    public String getType();
+    public String getName();
 }

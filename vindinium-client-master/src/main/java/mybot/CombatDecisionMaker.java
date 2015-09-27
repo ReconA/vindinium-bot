@@ -45,7 +45,7 @@ public class CombatDecisionMaker implements DecisionMaker {
     }
 
     @Override
-    public String getType() {
+    public String getName() {
         return "Combat Decision Maker";
     }
 

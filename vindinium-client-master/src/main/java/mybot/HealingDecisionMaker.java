@@ -19,16 +19,14 @@ public class HealingDecisionMaker implements DecisionMaker {
     /**
      * Heal if health is less than 50, or standing next to a pub and health is less than 80.
      * @param pathfinder
-     * @return 
+     * @return True if we want to heal, false otherwise. 
      */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        logger.info("Healing Decision Maker thinks...");
         this.pathfinder = pathfinder;
         this.gameState = this.pathfinder.getGameState();
         return (gameState.getMe().getLife() < 50
                 || (gameState.getMe().getLife() < 80 && pathfinder.standingAdjacentToPub()));
-
     }
 
     /**
@@ -37,12 +35,12 @@ public class HealingDecisionMaker implements DecisionMaker {
      */
     @Override
     public BotMove takeAction() {
-        Vertex goal = this.pathfinder.goToClosestPub();
-        return pathfinder.moveTowards(goal);
+        Vertex goal = this.pathfinder.getClosestPub();
+        return this.pathfinder.moveTowards(goal);
     }
 
     @Override
-    public String getType() {
+    public String getName() {
         return "Healing Decision Maker";
     }
 

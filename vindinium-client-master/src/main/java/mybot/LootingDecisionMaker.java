@@ -1,8 +1,6 @@
 package mybot;
 
 import com.brianstempin.vindiniumclient.bot.BotMove;
-import com.brianstempin.vindiniumclient.bot.advanced.AdvancedGameState;
-import com.brianstempin.vindiniumclient.bot.advanced.Vertex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,28 +10,21 @@ import org.apache.logging.log4j.Logger;
 public class LootingDecisionMaker implements DecisionMaker {
 
     private static final Logger logger = LogManager.getLogger(LootingDecisionMaker.class);
-    private AdvancedGameState gameState;
     private Pathfinder pathfinder;
 
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
-        logger.info("Looting Decision Maker thinks...");
-
         this.pathfinder = pathfinder;
-        this.gameState = this.pathfinder.getGameState();
-
         return true; //Last one in the decision tree.
     }
 
     @Override
     public BotMove takeAction() {
-        Vertex goal = pathfinder.goToClosestMine();
-        logger.info(this.getType() + " takes action and heads towards " + goal + "!");
-        return pathfinder.moveTowards(goal);
+        return pathfinder.goToClosestMine();
     }
 
     @Override
-    public String getType() {
+    public String getName() {
         return "Looting Decision Maker";
     }
 

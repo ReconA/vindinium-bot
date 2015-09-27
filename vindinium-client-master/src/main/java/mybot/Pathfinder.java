@@ -3,7 +3,6 @@ package mybot;
 import com.brianstempin.vindiniumclient.bot.BotMove;
 import com.brianstempin.vindiniumclient.bot.advanced.AdvancedGameState;
 import com.brianstempin.vindiniumclient.bot.advanced.Mine;
-import com.brianstempin.vindiniumclient.bot.advanced.Pub;
 import com.brianstempin.vindiniumclient.bot.advanced.Vertex;
 import com.brianstempin.vindiniumclient.dto.GameState.*;
 import java.util.ArrayDeque;
@@ -85,6 +84,17 @@ public class Pathfinder {
         return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
     }
 
+    public int calcDistance(Vertex a, Vertex b) {
+        return calcDistance(a.getPosition(), b.getPosition());
+    }
+
+    public boolean heroOwns(Mine mine, Hero hero) {
+        if (mine.getOwner() == null) {
+            return false;
+        }
+        return mine.getOwner().getId() == hero.getId();
+    }
+
     /**
      * Check if a mine is owned by me.
      *
@@ -92,11 +102,7 @@ public class Pathfinder {
      * @return True if the mine is owned by me, false otherwise.
      */
     public boolean isMyMine(Mine mine) {
-        if (mine.getOwner() == null) {
-            return false;
-        }
-
-        return mine.getOwner().getId() == me.getId();
+        return this.heroOwns(mine, me);
     }
 
     /**
@@ -145,15 +151,19 @@ public class Pathfinder {
     /**
      * Returns current position.
      *
-     * @return
+     * @return Current position
      */
     public Position getCurrentPosition() {
         return gameState.getMe().getPos();
     }
 
-    public Vertex goToClosestMine() {
-        for (int i = 0; i < mines.length; i++) {
-            Vertex v = mines[i];
+    /**
+     * Return closest mine not owned by me.
+     *
+     * @return Vertex of the closest mine. Null if no such mine is found.
+     */
+    private Vertex getClosestMine() {
+        for (Vertex v : mines) {
             if (!isMyMine(gameState.getMines().get(v.getPosition()))) {
                 return v;
             }
@@ -161,7 +171,12 @@ public class Pathfinder {
         return null;
     }
 
-    public Vertex goToClosestPub() {
+    /**
+     * Returns closest pub.
+     *
+     * @return
+     */
+    public Vertex getClosestPub() {
         return pubs[0];
     }
 
@@ -170,11 +185,32 @@ public class Pathfinder {
     }
 
     /**
-     * Determine if I'm standing next to a pub. 
-     * @return True is there is an adjacent pub. False otherwise. 
+     * Determine if I'm standing next to a pub.
+     *
+     * @return True is there is an adjacent pub. False otherwise.
      */
     public boolean standingAdjacentToPub() {
-        return calcDistance(pubs[0].getPosition(), getCurrentPosition()) == 1;
+        return calcDistance(pubs[0].getPosition(), this.getCurrentPosition()) == 1;
+    }
+
+    /**
+     * Determine if I'm standing next to an enemy mine.
+     *
+     * @return True is there is an adjacent enemy mine. False otherwise.
+     */
+    public boolean standingAdjacentToMine() {
+        return calcDistance(this.getClosestMine().getPosition(), this.getCurrentPosition()) == 1;
+    }
+
+    public BotMove goToClosestPub() {
+        logger.info("Heading to the closest pub.");
+        return this.moveTowards(pubs[0]);
+    }
+
+    public BotMove goToClosestMine() {
+        Vertex closestMine = this.getClosestMine();
+        logger.info("Heading to closest mine at " + closestMine);
+        return this.moveTowards(closestMine);
     }
 
 }
