@@ -21,9 +21,13 @@ public class LootingDecisionMaker implements DecisionMaker {
     @Override
     public BotMove takeAction(Pathfinder pathfinder) {
         Vertex goal = pathfinder.getClosestMine();
+        if (goal == null) {
+            return pathfinder.moveTowards(pathfinder.findSafePub());
+        }
+
         int healThreshold = 50;
         int myHealth = pathfinder.getGameState().getMe().getLife();
-       
+
         if (myHealth - goal.getDistance() < healThreshold) {
             logger.info("Would go to a mine, but HP will drain below the health threshold. Going to pub instead.");
             return pathfinder.goToClosestPub();

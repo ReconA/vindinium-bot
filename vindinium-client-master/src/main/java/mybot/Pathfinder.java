@@ -6,7 +6,11 @@ import com.brianstempin.vindiniumclient.bot.advanced.Mine;
 import com.brianstempin.vindiniumclient.bot.advanced.Vertex;
 import com.brianstempin.vindiniumclient.dto.GameState.*;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,14 +31,16 @@ public class Pathfinder {
         this.me = gameState.getMe();
         this.mines = new Vertex[this.gameState.getMines().size()];
         this.pubs = new Vertex[this.gameState.getPubs().size()];
+
         bfs(gameState.getBoardGraph().get(me.getPos()));
     }
 
     /**
      * Do a breadth first search on the current map. All vertices reachable from
-     * current vertex have a distance from current vertex and a parent vertex.
+     * the current vertex have a distance from current vertex, and a parent
+     * vertex.
      * <p>
-     * On the first turn makes a list of vertices with an adjacent pub or mine.
+     * Also makes an array of all vertices with a pub or mine.
      *
      * @param start The root of the search.
      */
@@ -87,12 +93,13 @@ public class Pathfinder {
     public int calcDistance(Vertex a, Vertex b) {
         return calcDistance(a.getPosition(), b.getPosition());
     }
-    
+
     /**
-     * Check if hero owns a mine. 
-     * @param mine  
-     * @param hero 
-     * @return 
+     * Check if hero owns a mine.
+     *
+     * @param mine
+     * @param hero
+     * @return
      */
     public boolean heroOwns(Mine mine, Hero hero) {
         if (mine.getOwner() == null) {
@@ -160,7 +167,11 @@ public class Pathfinder {
      * @return Current position
      */
     public Position getCurrentPosition() {
-        return gameState.getMe().getPos();
+        return me.getPos();
+    }
+
+    public Vertex getCurrentVertex() {
+        return gameState.getBoardGraph().get(me.getPos());
     }
 
     /**
@@ -217,6 +228,74 @@ public class Pathfinder {
         Vertex closestMine = this.getClosestMine();
         logger.info("Heading to closest mine at " + closestMine);
         return this.moveTowards(closestMine);
+    }
+
+    public Set threatenedVertices(Hero enemy) {
+        Set<Vertex> threatened = new HashSet<>();
+        Vertex enemyPos = this.gameState.getBoardGraph().get(enemy.getPos());
+        threatened.add(enemyPos);
+
+        for (Vertex v : enemyPos.getAdjacentVertices()) {
+            threatened.add(v);
+            for (Vertex adj : v.getAdjacentVertices()) {
+                threatened.add(adj);
+            }
+        }
+
+        return threatened;
+    }
+
+    /**
+     * Tries to find a safe path to a pub. If no safe path exists, tries to go
+     * the closest pub.
+     *
+     * @return
+     */
+    public Vertex findSafePub() {
+        for (Vertex pub : this.pubs) {
+            Vertex pathNode = pub;
+            while (true) {
+                if (gameState.getHeroesByPosition().containsKey(pathNode.getPosition())) {
+                    break;
+                } else if (calcDistance(this.getCurrentPosition(), pathNode.getPosition()) != 1) {
+                    return pub;
+                }
+                pathNode = pathNode.getParent();
+            }
+        }
+        return pubs[0];
+    }
+
+    public Hero getClosestEnemy() {
+        Hero closest = null;
+        int minDist = Integer.MAX_VALUE;
+        for (Hero h : gameState.getHeroesById().values()) {
+            if (h.getId() != gameState.getMe().getId()) {
+                Vertex v = gameState.getBoardGraph().get(h.getPos());
+                if (v.getDistance() < minDist) {
+                    minDist = v.getDistance();
+                    closest = h;
+                }
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Check if a hero is standing next to a pub.
+     *
+     * @param h
+     * @return True is hero is standing next to a pub. 
+     */
+    public boolean standsAdjacentToInn(Hero h) {
+        Position heroPos = h.getPos();
+        for (Vertex pub : this.pubs) {
+            if (calcDistance(pub.getPosition(), heroPos) == 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

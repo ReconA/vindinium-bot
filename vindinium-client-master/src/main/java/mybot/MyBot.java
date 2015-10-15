@@ -9,9 +9,9 @@ import org.apache.logging.log4j.Logger;
 public class MyBot implements AdvancedBot {
 
     private final DecisionMaker[] decisionMakers = {
+        new CombatDecisionMaker(),
         new InnCamperDecisionMaker(),
         new TelefragDecisionmaker(),
-//        new CombatDecisionMaker(),
         new HealingDecisionMaker(),
         new LootingDecisionMaker()};
 
