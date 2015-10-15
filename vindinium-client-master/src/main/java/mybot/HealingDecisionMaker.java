@@ -28,7 +28,7 @@ public class HealingDecisionMaker implements DecisionMaker {
         AdvancedGameState gameState = pathfinder.getGameState();
 
         int myHealth = gameState.getMe().getLife();
-        if (myHealth < almostFull && pathfinder.standingAdjacentToPub()) {
+        if (myHealth < almostFull && pathfinder.standsAdjacentToInn(pathfinder.getGameState().getMe())) {
             logger.info("Healing to full HP.");
             return true;
         } else if (myHealth < this.healthThreshold) {

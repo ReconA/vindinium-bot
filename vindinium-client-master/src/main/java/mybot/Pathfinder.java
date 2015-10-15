@@ -19,64 +19,122 @@ import org.apache.logging.log4j.Logger;
  */
 public class Pathfinder {
 
-    private final Vertex[] mines;
-    private final Vertex[] pubs;
+    private final List<Vertex> mines;
+    private final List<Vertex> pubs;
     private final Hero me;
     private final AdvancedGameState gameState;
+
+    private final int SPAWN_POINT_COST = 15;
+    private final int THREAT_COST = 8;
+    private final int THREAT_RADIUS = 4;
+    private final int UNPASSABLE = 1000;
 
     private static final Logger logger = LogManager.getLogger(Pathfinder.class);
 
     public Pathfinder(AdvancedGameState gameState) {
         this.gameState = gameState;
         this.me = gameState.getMe();
-        this.mines = new Vertex[this.gameState.getMines().size()];
-        this.pubs = new Vertex[this.gameState.getPubs().size()];
+        this.mines = new ArrayList<>();
+        this.pubs = new ArrayList<>();
 
-        bfs(gameState.getBoardGraph().get(me.getPos()));
+        resetVertices();
+        for (Hero h : gameState.getHeroesById().values()) {
+            if (h.getId() != me.getId()) {
+                initVertexCosts(h);
+            }
+        }
+        dijkstra();
+        logger.info("Current position " + gameState.getMe().getPos());
+    }
+
+    private void dijkstra() {
+        List<Vertex> q = new ArrayList<>();
+        Vertex source = gameState.getBoardGraph().get(me.getPos());
+
+        for (Vertex v : gameState.getBoardGraph().values()) {
+            if (v.getPosition().equals(source.getPosition())) {
+                v.setDistance(0);
+            } else {
+                v.setDistance(Integer.MAX_VALUE);
+            }
+            v.setParent(null);
+            q.add(v);
+        }
+
+        while (!q.isEmpty()) {
+            Vertex u = minDistVertex(q);
+            if (gameState.getMines().containsKey(u.getPosition())) {
+                mines.add(u);
+            }
+            if (gameState.getPubs().containsKey(u.getPosition())) {
+                pubs.add(u);
+            }
+
+            for (Vertex v : u.getAdjacentVertices()) {
+                int alt = u.getDistance() + v.getCost();
+                if (alt < v.getDistance()) {
+                    v.setDistance(alt);
+                    v.setParent(u);
+                }
+            }
+
+        }
+    }
+
+    private Vertex minDistVertex(List<Vertex> list) {
+        Vertex min = null;
+        int minDist = Integer.MAX_VALUE;
+
+        for (Vertex v : list) {
+            if (v.getDistance() < minDist) {
+                min = v;
+                minDist = v.getDistance();
+            }
+        }
+        list.remove(min);
+
+        return min;
     }
 
     /**
-     * Do a breadth first search on the current map. All vertices reachable from
-     * the current vertex have a distance from current vertex, and a parent
-     * vertex.
-     * <p>
-     * Also makes an array of all vertices with a pub or mine.
-     *
-     * @param start The root of the search.
+     * Give vertices a movement cost based on enemy locations and spawn points.
      */
-    private void bfs(Vertex start) {
-        logger.info("Doing a breadth first search.");
-        logger.info("Current position " + me.getPos());
-        for (Vertex v : gameState.getBoardGraph().values()) {
-            v.setDistance(Integer.MAX_VALUE);
-            v.setParent(null);
-        }
+    private void initVertexCosts(Hero h) {
+        gameState.getBoardGraph().get(h.getPos()).addCost(SPAWN_POINT_COST);
+
+        Vertex enemyPos = gameState.getBoardGraph().get(h.getPos());
+        enemyPos.addCost(UNPASSABLE);
 
         Queue<Vertex> q = new ArrayDeque<>();
-        start.setDistance(0);
-        q.add(start);
+        Set<Vertex> visited = new HashSet<>();
+        visited.add(enemyPos);
+        q.add(enemyPos);
 
-        int m = 0;
-        int p = 0;
+        int currentDepth = 0;
+        int elementsToDepthIncrease = 1;
+        int nextElementsToDepthIncrease = 0;
+
         while (!q.isEmpty()) {
-            Vertex v = q.poll();
-
-            if (gameState.getMines().containsKey(v.getPosition())) {
-                mines[m] = v;
-                m++;
-            } else if (gameState.getPubs().containsKey(v.getPosition())) {
-                pubs[p] = v;
-                p++;
-            } else {
-                for (Vertex adj : v.getAdjacentVertices()) {
-                    if (adj.getDistance() == Integer.MAX_VALUE) {
-                        adj.setDistance(v.getDistance() + 1);
-                        adj.setParent(v);
-                        q.add(adj);
-                    }
+            Vertex current = q.poll();
+            current.addCost(THREAT_COST - currentDepth);
+            nextElementsToDepthIncrease += current.getAdjacentVertices().size();
+            if (--elementsToDepthIncrease == 0) {
+                if (++currentDepth > THREAT_RADIUS) {
+                    return;
                 }
+                elementsToDepthIncrease = nextElementsToDepthIncrease;
+                nextElementsToDepthIncrease = 0;
+            }
+
+            for (Vertex adj : current.getAdjacentVertices()) {
+                if (!visited.contains(adj)) {
+                    q.add(adj);
+                    visited.add(adj);
+                }
+
             }
         }
+
     }
 
     /**
@@ -116,6 +174,10 @@ public class Pathfinder {
      */
     public boolean isMyMine(Mine mine) {
         return this.heroOwns(mine, me);
+    }
+
+    public boolean isMyMine(Vertex v) {
+        return isMyMine(gameState.getMines().get(v.getPosition()));
     }
 
     /**
@@ -161,6 +223,19 @@ public class Pathfinder {
         return move;
     }
 
+    public int movesToReach(Vertex goal) {
+        if (goal == null) {
+            return 0;
+        }
+        int moves = 0;
+        while (calcDistance(getCurrentPosition(), goal.getPosition()) != 1) {
+            goal = goal.getParent();
+            moves++;
+        }
+
+        return moves;
+    }
+
     /**
      * Returns current position.
      *
@@ -175,39 +250,38 @@ public class Pathfinder {
     }
 
     /**
-     * Return closest mine not owned by me.
-     *
-     * @return Vertex of the closest mine. Null if no such mine is found.
-     */
-    public Vertex getClosestMine() {
-        for (Vertex v : mines) {
-            if (!isMyMine(gameState.getMines().get(v.getPosition()))) {
-                return v;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Returns closest pub.
      *
      * @return
      */
     public Vertex getClosestPub() {
-        return pubs[0];
+        Vertex closest = null;
+        int minDist = Integer.MAX_VALUE;
+        for (Vertex v : pubs) {
+            if (v.getDistance() < minDist) {
+                closest = v;
+                minDist = v.getDistance();
+            }
+        }
+        return closest;
+    }
+
+    public Vertex getClosestMine() {
+        Vertex closest = null;
+        int minDist = Integer.MAX_VALUE;
+        for (Vertex v : mines) {
+            if (!isMyMine(v)) {
+                if (v.getDistance() < minDist) {
+                    closest = v;
+                    minDist = v.getDistance();
+                }
+            }
+        }
+        return closest;
     }
 
     public AdvancedGameState getGameState() {
         return gameState;
-    }
-
-    /**
-     * Determine if I'm standing next to a pub.
-     *
-     * @return True is there is an adjacent pub. False otherwise.
-     */
-    public boolean standingAdjacentToPub() {
-        return calcDistance(pubs[0].getPosition(), this.getCurrentPosition()) == 1;
     }
 
     /**
@@ -220,8 +294,8 @@ public class Pathfinder {
     }
 
     public BotMove goToClosestPub() {
-        logger.info("Heading to the closest pub at " + pubs[0]);
-        return this.moveTowards(pubs[0]);
+        logger.info("Heading to the closest pub at " + getClosestPub());
+        return this.moveTowards(getClosestPub());
     }
 
     public BotMove goToClosestMine() {
@@ -263,7 +337,7 @@ public class Pathfinder {
                 pathNode = pathNode.getParent();
             }
         }
-        return pubs[0];
+        return pubs.get(0);
     }
 
     public Hero getClosestEnemy() {
@@ -272,8 +346,8 @@ public class Pathfinder {
         for (Hero h : gameState.getHeroesById().values()) {
             if (h.getId() != gameState.getMe().getId()) {
                 Vertex v = gameState.getBoardGraph().get(h.getPos());
-                if (v.getDistance() < minDist) {
-                    minDist = v.getDistance();
+                if (movesToReach(v) < minDist) {
+                    minDist = movesToReach(v);
                     closest = h;
                 }
             }
@@ -285,7 +359,7 @@ public class Pathfinder {
      * Check if a hero is standing next to a pub.
      *
      * @param h
-     * @return True is hero is standing next to a pub. 
+     * @return True is hero is standing next to a pub.
      */
     public boolean standsAdjacentToInn(Hero h) {
         Position heroPos = h.getPos();
@@ -296,6 +370,17 @@ public class Pathfinder {
         }
 
         return false;
+    }
+
+    private void resetVertices() {
+        for (Vertex v : gameState.getBoardGraph().values()) {
+            v.setDistance(0);
+            v.setCost(0);
+        }
+    }
+    
+    public Vertex positionToVertex(Position p) {
+        return this.gameState.getBoardGraph().get(p);
     }
 
 }

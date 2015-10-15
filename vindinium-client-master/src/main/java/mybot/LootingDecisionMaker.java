@@ -24,11 +24,13 @@ public class LootingDecisionMaker implements DecisionMaker {
         if (goal == null) {
             return pathfinder.moveTowards(pathfinder.findSafePub());
         }
+        logger.info("Going to mine at " + goal + ", distance " + goal.getDistance());
 
         int healThreshold = 50;
         int myHealth = pathfinder.getGameState().getMe().getLife();
 
-        if (myHealth - goal.getDistance() < healThreshold) {
+        if (myHealth - pathfinder.movesToReach(goal) < healThreshold) {
+            logger.info("moves to reach goal=" + pathfinder.movesToReach(goal));
             logger.info("Would go to a mine, but HP will drain below the health threshold. Going to pub instead.");
             return pathfinder.goToClosestPub();
         } else {

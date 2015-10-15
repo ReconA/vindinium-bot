@@ -54,7 +54,7 @@ public class InnCamperDecisionMaker implements DecisionMaker {
     public BotMove takeAction(Pathfinder pathfinder) {
         AdvancedGameState gameState = pathfinder.getGameState();
         logger.info("I am the richest hero. ");
-        if (pathfinder.standingAdjacentToPub() && gameState.getMe().getLife() > 50) {
+        if (pathfinder.standsAdjacentToInn(pathfinder.getGameState().getMe()) && gameState.getMe().getLife() > 50) {
             logger.info("Camping at an inn.");
             return BotMove.STAY;
         } else {
