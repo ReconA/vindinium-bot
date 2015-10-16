@@ -22,7 +22,7 @@ public class LootingDecisionMaker implements DecisionMaker {
     public BotMove takeAction(Pathfinder pathfinder) {
         Vertex goal = pathfinder.getClosestMine();
         if (goal == null) {
-            return pathfinder.moveTowards(pathfinder.findSafePub());
+            return pathfinder.moveTowards(pathfinder.getClosestPub());
         }
         logger.info("Going to mine at " + goal + ", distance " + goal.getDistance());
 

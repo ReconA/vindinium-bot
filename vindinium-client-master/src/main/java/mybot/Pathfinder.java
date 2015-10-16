@@ -43,6 +43,7 @@ public class Pathfinder {
                 initVertexCosts(h);
             }
         }
+        resetInnAndMineCost();
         dijkstra();
         logger.info("Current position " + gameState.getMe().getPos());
     }
@@ -65,19 +66,17 @@ public class Pathfinder {
             Vertex u = minDistVertex(q);
             if (gameState.getMines().containsKey(u.getPosition())) {
                 mines.add(u);
-            }
-            if (gameState.getPubs().containsKey(u.getPosition())) {
+            } else if (gameState.getPubs().containsKey(u.getPosition())) {
                 pubs.add(u);
-            }
-
-            for (Vertex v : u.getAdjacentVertices()) {
-                int alt = u.getDistance() + v.getCost();
-                if (alt < v.getDistance()) {
-                    v.setDistance(alt);
-                    v.setParent(u);
+            } else {
+                for (Vertex v : u.getAdjacentVertices()) {
+                    int alt = u.getDistance() + v.getCost();
+                    if (alt < v.getDistance()) {
+                        v.setDistance(alt);
+                        v.setParent(u);
+                    }
                 }
             }
-
         }
     }
 
@@ -100,6 +99,7 @@ public class Pathfinder {
      * Give vertices a movement cost based on enemy locations and spawn points.
      */
     private void initVertexCosts(Hero h) {
+        logger.info("Adding threats from hero at " + h.getPos());
         gameState.getBoardGraph().get(h.getPos()).addCost(SPAWN_POINT_COST);
 
         Vertex enemyPos = gameState.getBoardGraph().get(h.getPos());
@@ -258,10 +258,16 @@ public class Pathfinder {
         Vertex closest = null;
         int minDist = Integer.MAX_VALUE;
         for (Vertex v : pubs) {
+            logger.info("Pub at " + v + ", distance=" + v.getDistance());
             if (v.getDistance() < minDist) {
                 closest = v;
                 minDist = v.getDistance();
             }
+        }
+        if (closest != null) {
+            logger.info("Closest pub at " + closest + ", distance " + closest.getDistance());
+        } else {
+            logger.info("Closest pub not found.");
         }
         return closest;
     }
@@ -319,27 +325,6 @@ public class Pathfinder {
         return threatened;
     }
 
-    /**
-     * Tries to find a safe path to a pub. If no safe path exists, tries to go
-     * the closest pub.
-     *
-     * @return
-     */
-    public Vertex findSafePub() {
-        for (Vertex pub : this.pubs) {
-            Vertex pathNode = pub;
-            while (true) {
-                if (gameState.getHeroesByPosition().containsKey(pathNode.getPosition())) {
-                    break;
-                } else if (calcDistance(this.getCurrentPosition(), pathNode.getPosition()) != 1) {
-                    return pub;
-                }
-                pathNode = pathNode.getParent();
-            }
-        }
-        return pubs.get(0);
-    }
-
     public Hero getClosestEnemy() {
         Hero closest = null;
         int minDist = Integer.MAX_VALUE;
@@ -365,6 +350,7 @@ public class Pathfinder {
         Position heroPos = h.getPos();
         for (Vertex pub : this.pubs) {
             if (calcDistance(pub.getPosition(), heroPos) == 1) {
+                logger.info("Hero " + h.getName() + " is standing next to an inn at " + pub);
                 return true;
             }
         }
@@ -375,12 +361,22 @@ public class Pathfinder {
     private void resetVertices() {
         for (Vertex v : gameState.getBoardGraph().values()) {
             v.setDistance(0);
-            v.setCost(0);
+            v.setCost(1);
         }
     }
-    
+
     public Vertex positionToVertex(Position p) {
         return this.gameState.getBoardGraph().get(p);
+    }
+
+    private void resetInnAndMineCost() {
+        for (Vertex v : mines) {
+            v.setCost(1);
+        }
+
+        for (Vertex v : pubs) {
+            v.setCost(1);
+        }
     }
 
 }

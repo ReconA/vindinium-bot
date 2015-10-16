@@ -41,6 +41,14 @@ public class CombatDecisionMaker implements DecisionMaker {
         this.gameState = pathfinder.getGameState();
         this.me = this.gameState.getMe();
         
+        if (pathfinder.standsAdjacentToInn(me) && pathfinder.standsAdjacentToInn(closestEnemy)) {
+            if (me.getLife() > 90 ) {
+                return pathfinder.goToClosestMine();
+            } else {
+                return pathfinder.goToClosestPub();
+            }
+        }
+        
         if (pathfinder.calcDistance(me.getPos(), pathfinder.getClosestPub().getPosition()) == 1) {
             if (me.getLife() < 50) {
                 return pathfinder.moveTowards(pathfinder.getClosestPub());
@@ -50,7 +58,7 @@ public class CombatDecisionMaker implements DecisionMaker {
         }
         
         if (hasMoreHpThanMe(this.closestEnemy) || pathfinder.standsAdjacentToInn(this.closestEnemy)) {
-            flee();
+            return flee();
         }
         
         Vertex best = pathfinder.getCurrentVertex();
