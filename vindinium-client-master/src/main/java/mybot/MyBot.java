@@ -6,8 +6,14 @@ import com.brianstempin.vindiniumclient.bot.BotMove;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Main bot class that is called every turn to decide next move. 
+ */
 public class MyBot implements AdvancedBot {
 
+    /**
+     * Contains decision makers which simulate a decision tree.
+     */
     private final DecisionMaker[] decisionMakers = {
         new CombatDecisionMaker(),
         new InnCamperDecisionMaker(),
@@ -22,7 +28,7 @@ public class MyBot implements AdvancedBot {
      * is passed to that DM.
      *
      * @param gameState Current game state.
-     * @return The direction next move will go to.
+     * @return The direction of the next move. 
      */
     @Override
     public BotMove move(AdvancedGameState gameState) {
@@ -53,10 +59,16 @@ public class MyBot implements AdvancedBot {
         return move;
     }
 
+    /**
+     * Called before the start of the game. Does nothing.
+     */
     @Override
     public void setup() {
     }
 
+    /**
+     * Called at the end of the game. Does nothing. 
+     */
     @Override
     public void shutdown() {
     }

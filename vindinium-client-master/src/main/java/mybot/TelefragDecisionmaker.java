@@ -17,8 +17,8 @@ public class TelefragDecisionmaker implements DecisionMaker {
 
     /**
      * If an enemy with more mines than me is standing on my spawn point, check if there a way to commit suicide this turn. 
-     * @param pathfinder
-     * @return 
+     * @param pathfinder Contains map data. 
+     * @return True if I can telefrag someone. 
      */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
@@ -40,7 +40,7 @@ public class TelefragDecisionmaker implements DecisionMaker {
 
     /**
      * Commit suicide to telefrag an enemy. 
-     * @return 
+     * @return A move to suicide. 
      */
     @Override
     public BotMove takeAction(Pathfinder pathfinder) {

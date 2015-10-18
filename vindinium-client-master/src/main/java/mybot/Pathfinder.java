@@ -19,18 +19,32 @@ import org.apache.logging.log4j.Logger;
  */
 public class Pathfinder {
 
+    /**
+     * A list of all mines.
+     */
     private final List<Vertex> mines;
+    /**
+     * A list of all pubs.
+     */
     private final List<Vertex> pubs;
+    /**
+     * The hero that I control.
+     */
     private final Hero me;
+    /**
+     * Contains game data processed from servers JSON response.
+     */
     private final AdvancedGameState gameState;
-
-    private final int SPAWN_POINT_COST = 15;
-    private final int THREAT_COST = 8;
-    private final int THREAT_RADIUS = 4;
-    private final int UNPASSABLE = 1000;
 
     private static final Logger logger = LogManager.getLogger(Pathfinder.class);
 
+    /**
+     * Create a new pathfinder from game state. Adds movement cost based on
+     * enemy hero locations and spawn points and calculates distance to every
+     * vertex using Dijkstra's algorithm.
+     *
+     * @param gameState Current game state.
+     */
     public Pathfinder(AdvancedGameState gameState) {
         this.gameState = gameState;
         this.me = gameState.getMe();
@@ -48,6 +62,9 @@ public class Pathfinder {
         logger.info("Current position " + gameState.getMe().getPos());
     }
 
+    /**
+     * Dijkstra's algorithm calculates the distance to every vertex and makes a list of all mines and pubs. 
+     */
     private void dijkstra() {
         List<Vertex> q = new ArrayList<>();
         Vertex source = gameState.getBoardGraph().get(me.getPos());
@@ -80,9 +97,15 @@ public class Pathfinder {
         }
     }
 
-    private Vertex minDistVertex(List<Vertex> list) {
-        Vertex min = null;
-        int minDist = Integer.MAX_VALUE;
+    /**
+     * Get the vertex with the smallest distance and remove it from the list.
+     *
+     * @param list A list of unprocessed vertices.
+     * @return Vertex with the smallest distance.
+     */
+    private Vertex minDistVertex(List<Vertex> list) { //This is terrible in every way, but because Vindinium maps 
+        Vertex min = null;                            // are so small, it does not matter performance wise. 
+        int minDist = Integer.MAX_VALUE;              //Still, should be fixed one day. 
 
         for (Vertex v : list) {
             if (v.getDistance() < minDist) {
@@ -97,8 +120,14 @@ public class Pathfinder {
 
     /**
      * Give vertices a movement cost based on enemy locations and spawn points.
+     * This is done with a bfs to a certain depth.
      */
     private void initVertexCosts(Hero h) {
+        final int SPAWN_POINT_COST = 15;
+        final int THREAT_COST = 8;
+        final int THREAT_RADIUS = 4;
+        final int UNPASSABLE = 1000;
+
         logger.info("Adding threats from hero at " + h.getPos());
         gameState.getBoardGraph().get(h.getPos()).addCost(SPAWN_POINT_COST);
 
@@ -131,23 +160,28 @@ public class Pathfinder {
                     q.add(adj);
                     visited.add(adj);
                 }
-
             }
         }
-
     }
 
     /**
      * Calculate Manhattan distance between positions a and b.
      *
-     * @param a
-     * @param b
+     * @param a First position.
+     * @param b Second position.
      * @return Manhattan distance between a and b.
      */
     public int calcDistance(Position a, Position b) {
         return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
     }
 
+    /**
+     * Calculate Manhattan distance between vertices a and b.
+     *
+     * @param a First vertex.
+     * @param b Second vertex.
+     * @return Manhattan distance between a and b.
+     */
     public int calcDistance(Vertex a, Vertex b) {
         return calcDistance(a.getPosition(), b.getPosition());
     }
@@ -157,7 +191,8 @@ public class Pathfinder {
      *
      * @param mine
      * @param hero
-     * @return
+     * @return True if the hero owns the mine. False if mine has no owner or
+     * some other owner.
      */
     public boolean heroOwns(Mine mine, Hero hero) {
         if (mine.getOwner() == null) {
@@ -169,15 +204,11 @@ public class Pathfinder {
     /**
      * Check if a mine is owned by me.
      *
-     * @param mine Vertex in which the mine is located.
+     * @param v Vertex in which the mine is located.
      * @return True if the mine is owned by me, false otherwise.
      */
-    public boolean isMyMine(Mine mine) {
-        return this.heroOwns(mine, me);
-    }
-
     public boolean isMyMine(Vertex v) {
-        return isMyMine(gameState.getMines().get(v.getPosition()));
+        return heroOwns(gameState.getMines().get(v.getPosition()), me);
     }
 
     /**
@@ -223,6 +254,12 @@ public class Pathfinder {
         return move;
     }
 
+    /**
+     * Count how many moves are required to reach goal vertex.
+     *
+     * @param goal Goal vertex
+     * @return Amount of moves to reach goal.
+     */
     public int movesToReach(Vertex goal) {
         if (goal == null) {
             return 0;
@@ -235,9 +272,18 @@ public class Pathfinder {
 
         return moves;
     }
+/**
+     * Count how many moves are required to reach goal position.
+     *
+     * @param goal Goal vertex
+     * @return Amount of moves to reach goal. 
+     */
+    public int movesToReach(Position goal) {
+        return movesToReach(positionToVertex(goal));
+    }
 
     /**
-     * Returns current position.
+     * Returns the position I'm standing in.
      *
      * @return Current position
      */
@@ -245,6 +291,11 @@ public class Pathfinder {
         return me.getPos();
     }
 
+    /**
+     * Returns the vertex I'm standing in.
+     *
+     * @return
+     */
     public Vertex getCurrentVertex() {
         return gameState.getBoardGraph().get(me.getPos());
     }
@@ -252,13 +303,12 @@ public class Pathfinder {
     /**
      * Returns closest pub.
      *
-     * @return
+     * @return Vertex in which the closest pub is located.
      */
     public Vertex getClosestPub() {
         Vertex closest = null;
         int minDist = Integer.MAX_VALUE;
         for (Vertex v : pubs) {
-            logger.info("Pub at " + v + ", distance=" + v.getDistance());
             if (v.getDistance() < minDist) {
                 closest = v;
                 minDist = v.getDistance();
@@ -272,6 +322,11 @@ public class Pathfinder {
         return closest;
     }
 
+    /**
+     * Get cloest mine that I don't own.
+     *
+     * @return Closest mine.
+     */
     public Vertex getClosestMine() {
         Vertex closest = null;
         int minDist = Integer.MAX_VALUE;
@@ -299,17 +354,34 @@ public class Pathfinder {
         return calcDistance(this.getClosestMine().getPosition(), this.getCurrentPosition()) == 1;
     }
 
+    /**
+     * Go towards the closest pub.
+     *
+     * @return A move towards the closest pub.
+     */
     public BotMove goToClosestPub() {
         logger.info("Heading to the closest pub at " + getClosestPub());
         return this.moveTowards(getClosestPub());
     }
 
+    /**
+     * Go towards closest mine that I don't own.
+     *
+     * @return A move towards the closest mine.
+     */
     public BotMove goToClosestMine() {
         Vertex closestMine = this.getClosestMine();
         logger.info("Heading to closest mine at " + closestMine);
         return this.moveTowards(closestMine);
     }
 
+    /**
+     * Returns a set of all vertices an enemy can deal damage to in the next
+     * turn.
+     *
+     * @param enemy Enemy whose threatened vertices are returned.
+     * @return Vertices in which the enemy can deal damage to.
+     */
     public Set threatenedVertices(Hero enemy) {
         Set<Vertex> threatened = new HashSet<>();
         Vertex enemyPos = this.gameState.getBoardGraph().get(enemy.getPos());
@@ -324,7 +396,10 @@ public class Pathfinder {
 
         return threatened;
     }
-
+    /**
+     * Get closest enemy hero. The distance is measured by how many moves it takes to reach target. 
+     * @return Closest enemy hero. 
+     */
     public Hero getClosestEnemy() {
         Hero closest = null;
         int minDist = Integer.MAX_VALUE;
@@ -358,6 +433,9 @@ public class Pathfinder {
         return false;
     }
 
+    /**
+     * Reset the distance and cost of all vertices.
+     */
     private void resetVertices() {
         for (Vertex v : gameState.getBoardGraph().values()) {
             v.setDistance(0);
@@ -365,10 +443,19 @@ public class Pathfinder {
         }
     }
 
+    /**
+     * Returns the vertex at the given position.
+     *
+     * @param p Position of the requested vertex.
+     * @return Vertex with the given position.
+     */
     public Vertex positionToVertex(Position p) {
         return this.gameState.getBoardGraph().get(p);
     }
 
+    /**
+     * Set the movement cost of vertices that contain a mine or a pub to 1.
+     */
     private void resetInnAndMineCost() {
         for (Vertex v : mines) {
             v.setCost(1);

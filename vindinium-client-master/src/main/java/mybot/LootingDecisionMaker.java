@@ -12,12 +12,22 @@ public class LootingDecisionMaker implements DecisionMaker {
 
     private static final Logger logger = LogManager.getLogger(LootingDecisionMaker.class);
 
+    /**
+     * This is the last in the decision tree, so it will always want to act. 
+     * @param pathfinder Contains map data. 
+     * @return Always true.
+     */
     @Override
     public boolean wantsToAct(Pathfinder pathfinder) {
         logger.info("Looting a mine.");
-        return true; //Last one in the decision tree.
+        return true; 
     }
 
+    /**
+     * Go to the closest mine. If health would drop below healing threshold, go to the closest pub. 
+     * @param pathfinder Contains map data.
+     * @return A move towards the goal. 
+     */
     @Override
     public BotMove takeAction(Pathfinder pathfinder) {
         Vertex goal = pathfinder.getClosestMine();

@@ -7,9 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * If we are winning considerably, we won't risk anything and camp at an inn.
+ * If I am winning considerably, we won't risk anything and camp at an inn.
  *
- * @author Atte
  */
 public class InnCamperDecisionMaker implements DecisionMaker {
 
@@ -28,8 +27,8 @@ public class InnCamperDecisionMaker implements DecisionMaker {
         Hero me = gameState.getMe();
         int myMines = me.getMineCount();
         int myGold = me.getGold();
-        int goldMargin = 200;
-        int mineMargin = 2;
+        int goldMargin = 50;
+        int mineMargin = 1;
 
         for (Hero enemy : gameState.getHeroesById().values()) {
             if (enemy.getId() == me.getId()) {
@@ -37,7 +36,6 @@ public class InnCamperDecisionMaker implements DecisionMaker {
             }
             if (myGold < enemy.getGold() + goldMargin
                     || myMines < enemy.getMineCount() + mineMargin) {
-                logger.info("Hero " + enemy.getName() + " is almost as rich as me.");
                 return false;
             }
         }

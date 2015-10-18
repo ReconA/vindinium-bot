@@ -20,7 +20,7 @@ public class HealingDecisionMaker implements DecisionMaker {
      * Heal if health is less than 50, or standing next to a pub and health is
      * less than 80.
      *
-     * @param pathfinder
+     * @param pathfinder Contains map data. 
      * @return True if we want to heal, false otherwise.
      */
     @Override
