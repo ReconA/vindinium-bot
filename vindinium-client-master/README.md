@@ -1,1 +1,1 @@
-Vindium starter package by [Brian Stempin](http://github.com/bstempi) . My code is in com.brianstempin.vindiniumclient.bot.advanced.mybot.MyBot.
+Vindium starter client by [Brian Stempin](http://github.com/bstempi) . My code is located in the "mybot" package. Some of the client is also modified. 
