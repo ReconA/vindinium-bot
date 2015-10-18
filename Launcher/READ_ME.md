@@ -1,3 +1,4 @@
+#Manual
 Vindinium clients can be run in two modes: training and ranked. 
 
 Training mode places the bot againts three training bots, which move randomly. It is used to test the bot. 
