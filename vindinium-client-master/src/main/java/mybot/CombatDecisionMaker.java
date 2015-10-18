@@ -8,6 +8,9 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * 
+ */
 public class CombatDecisionMaker implements DecisionMaker {
     
     private static final Logger logger = LogManager.getLogger(CombatDecisionMaker.class);
@@ -75,10 +78,19 @@ public class CombatDecisionMaker implements DecisionMaker {
         return pathfinder.moveTowards(best);
     }
     
+    /**
+     * Try to go to a pub. 
+     * @return Move towards closest pub. 
+     */
     private BotMove flee() {
         return pathfinder.goToClosestPub();
     }
     
+    /**
+     * Check if hero survives more hits than me. 
+     * @param h
+     * @return 
+     */
     private boolean hasMoreHpThanMe(Hero h) {
         int hitDmg = 20;
         return h.getLife() / hitDmg > me.getLife() / hitDmg;
@@ -86,7 +98,9 @@ public class CombatDecisionMaker implements DecisionMaker {
 
     /**
      * Assigns a value to a vertex. This value describes how good a move to this
-     * vertex is.
+     * vertex is. 
+     * <p>
+     * Dealing damage and going closer to an enemy increase value, and receiving damage reduces it. 
      *
      * @param v Vertex to be evaluated.
      * @return
